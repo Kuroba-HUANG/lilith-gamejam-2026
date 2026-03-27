@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Forum"
-run/main_scene="uid://clwtuxf43m2cc"
+run/main_scene="uid://bdp5elhogd0ak"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 

@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://b1k2jtitlxeci"]
+
+[ext_resource type="Script" uid="uid://bpbmx2grwhh4r" path="res://post.gd" id="1_3bjc2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3bjc2"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Post" type="Panel" unique_id=2077852710]
+custom_minimum_size = Vector2(600, 80)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_3bjc2")
+script = ExtResource("1_3bjc2")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1349540768]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/separation = 10
+
+[node name="Avatar" type="TextureRect" parent="HBoxContainer" unique_id=1813337670]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=46491555]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer/VBoxContainer" unique_id=34436098]
+layout_mode = 2
+
+[node name="Nickname" type="Label" parent="HBoxContainer/VBoxContainer/HBoxContainer" unique_id=721213614]
+layout_mode = 2
+
+[node name="Time" type="Label" parent="HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1611625631]
+layout_mode = 2
+
+[node name="Message" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=409299510]
+layout_mode = 2

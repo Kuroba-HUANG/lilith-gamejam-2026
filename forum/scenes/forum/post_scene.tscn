@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://dop2ph21jo4ow"]
+
+[ext_resource type="Script" uid="uid://qiqjdiaxqk26" path="res://scripts/forum/post_scene.gd" id="1_uich3"]
+
+[node name="PostScene" type="Control" unique_id=1189145245]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_uich3")
+
+[node name="MainLayout" type="HBoxContainer" parent="." unique_id=1539904674]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="LeftColumn" type="VBoxContainer" parent="MainLayout" unique_id=1248065432]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="SearchRow" type="HBoxContainer" parent="MainLayout/LeftColumn" unique_id=2059420338]
+layout_mode = 2
+
+[node name="PostListScroll" type="ScrollContainer" parent="MainLayout/LeftColumn" unique_id=1053644051]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PostItemContainer" type="VBoxContainer" parent="MainLayout/LeftColumn/PostListScroll" unique_id=986825550]
+layout_mode = 2
+
+[node name="CenterColumn" type="VBoxContainer" parent="MainLayout" unique_id=1627961565]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+
+[node name="TopHeader" type="Panel" parent="MainLayout/CenterColumn" unique_id=903788073]
+layout_mode = 2
+
+[node name="PostDetailArea" type="VBoxContainer" parent="MainLayout/CenterColumn" unique_id=351858726]
+layout_mode = 2
+
+[node name="PostTitle" type="Label" parent="MainLayout/CenterColumn/PostDetailArea" unique_id=1807462280]
+layout_mode = 2
+text = "巨大的标题"
+
+[node name="PostMainContent" type="RichTextLabel" parent="MainLayout/CenterColumn/PostDetailArea" unique_id=1597885531]
+layout_mode = 2
+focus_mode = 2
+text = "帖子正文"
+fit_content = true
+selection_enabled = true
+
+[node name="ReplyInputBox" type="PanelContainer" parent="MainLayout/CenterColumn/PostDetailArea" unique_id=1526265944]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainLayout/CenterColumn/PostDetailArea/ReplyInputBox" unique_id=2088072737]
+layout_mode = 2
+
+[node name="InputText" type="TextEdit" parent="MainLayout/CenterColumn/PostDetailArea/ReplyInputBox/VBoxContainer" unique_id=916234324]
+layout_mode = 2
+text = "在这里输入"
+
+[node name="SendButton" type="Button" parent="MainLayout/CenterColumn/PostDetailArea/ReplyInputBox/VBoxContainer" unique_id=984333043]
+layout_mode = 2
+text = "发送"
+
+[node name="CommentScroll" type="ScrollContainer" parent="MainLayout/CenterColumn" unique_id=257754864]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CommentList" type="VBoxContainer" parent="MainLayout/CenterColumn/CommentScroll" unique_id=2049319557]
+layout_mode = 2
+
+[node name="RightColumn" type="VBoxContainer" parent="MainLayout" unique_id=97937363]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="UserCard" type="PanelContainer" parent="MainLayout/RightColumn" unique_id=690846735]
+layout_mode = 2
+
+[node name="NotificationButton" type="Button" parent="MainLayout/RightColumn" unique_id=737184383]
+layout_mode = 2
+text = "通知"
+
+[node name="CreatePostButton" type="Button" parent="MainLayout/RightColumn" unique_id=1579216798]
+layout_mode = 2
+text = "创建新帖子"

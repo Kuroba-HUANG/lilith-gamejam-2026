@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://dt6nbnv420i3v"]
+
+[ext_resource type="Script" uid="uid://bucikcwwmfiq3" path="res://scripts/forum/comment_item.gd" id="1_us66o"]
+
+[node name="CommentItem" type="HBoxContainer" unique_id=629120395]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_us66o")
+
+[node name="CommentAvatar" type="TextureRect" parent="." unique_id=756218436]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="CommentContent" type="VBoxContainer" parent="." unique_id=1979635720]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CommentMeta" type="HBoxContainer" parent="CommentContent" unique_id=195059376]
+layout_mode = 2
+
+[node name="CommentAuthor" type="Label" parent="CommentContent/CommentMeta" unique_id=160647357]
+layout_mode = 2
+
+[node name="CommentTime" type="Label" parent="CommentContent/CommentMeta" unique_id=1147385233]
+layout_mode = 2
+
+[node name="CommentText" type="Label" parent="CommentContent" unique_id=456065717]
+layout_mode = 2
+autowrap_mode = 2

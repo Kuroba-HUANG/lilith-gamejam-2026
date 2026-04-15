@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b7yjus3tkln5l" path="res://scripts/forum/post_list_item.gd" id="1_imo6v"]
 
 [node name="PostListItem" type="Button" unique_id=2045828002]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(250, 100)
 offset_right = 8.0
 offset_bottom = 8.0
 script = ExtResource("1_imo6v")

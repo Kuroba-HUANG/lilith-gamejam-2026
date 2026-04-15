@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bucikcwwmfiq3" path="res://scripts/forum/comment_item.gd" id="1_us66o"]
 
 [node name="CommentItem" type="HBoxContainer" unique_id=629120395]
+custom_minimum_size = Vector2(400, 0)
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_us66o")

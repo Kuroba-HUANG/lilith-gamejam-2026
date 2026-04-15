@@ -1,85 +1,47 @@
-# config/story_config.gd
-# 剧情配置加载器
+extends Node
 
-extends RefCounted
+# 存储解析后的剧情数据
+var story_data: Dictionary = {}
+const FILE_PATH = "res://data/story_data.json"
 
-# 数据结构
-class StoryPost:
-	var id: int
-	var post_type: String      # "thread" 或 "reply"
-	var character: String
-	var title: String
-	var content: String
-	var delay_seconds: float
-	var reply_to: int           # 仅 reply 类型使用
-	var stage: String
-	var required_flags: Array
-	var clear_flags: Array
-	
-	func _init(p_id, p_post_type, p_character, p_title, p_content, p_delay, p_reply_to = 0, p_stage = "", p_required_flags = [], p_clear_flags = []):
-		id = p_id
-		post_type = p_post_type
-		character = p_character
-		title = p_title
-		content = p_content
-		delay_seconds = p_delay
-		reply_to = p_reply_to
-		stage = p_stage
-		required_flags = p_required_flags
-		clear_flags = p_clear_flags
+func _ready() -> void:
+	load_story_data()
 
-# 缓存数据
-var _story_posts: Array = []
-var _loaded: bool = false
+## 加载并解析 JSON 文件
+func load_story_data():
+	if not FileAccess.file_exists(FILE_PATH):
+		push_error("错误：找不到剧情文件 " + FILE_PATH +"。已加载默认空数据")
+		return {"posts": []} # 返回一个空结构防止报错
 
-# 加载配置文件（从 JSON 文件读取）
-func load_config() -> bool:
-	var file = FileAccess.open("res://config/story_config.json", FileAccess.READ)
-	if not file:
-		print("错误：找不到 res://config/story_config.json 文件")
-		return false
-	
-	var content = file.get_as_text()
+	var file = FileAccess.open(FILE_PATH, FileAccess.READ)
+	var json_string = file.get_as_text()
 	file.close()
-	
-	var json = JSON.parse_string(content)
-	if json == null:
-		print("错误：解析 story_config.json 失败")
-		return false
-	
-	# 加载剧情帖子
-	if json.has("mainline_posts"):
-		_story_posts.clear()
-		for post_data in json["mainline_posts"]:
-			var post = StoryPost.new(
-				post_data.get("id", 0),
-				post_data.get("post_type", "thread"),
-				post_data.get("character", ""),
-				post_data.get("title", ""),
-				post_data.get("content", ""),
-				post_data.get("delay_seconds", 0.0),
-				post_data.get("reply_to", 0),
-				post_data.get("stage", ""),
-				post_data.get("required_flags", []),
-				post_data.get("clear_flags", [])
-			)
-			_story_posts.append(post)
-	
-	_loaded = true
-	print("✅ 成功加载 %d 个剧情帖子" % _story_posts.size())
-	return true
 
-# 获取所有剧情帖子
-func get_story_posts() -> Array:
-	if not _loaded:
-		load_config()
-	return _story_posts
+	var json = JSON.new()
+	var error = json.parse(json_string)
+	
+	if error == OK:
+		var data = json.get_data()
+		if typeof(data) == TYPE_DICTIONARY:
+			story_data = data
+			print("✅ 剧情数据加载成功，共有帖子：", story_data["posts"].size())
+		else:
+			push_error("错误：JSON 格式不符合预期的 Dictionary 结构")
+	else:
+		push_error("JSON 解析失败: ", json.get_error_message(), " 在第 ", json.get_error_line(), " 行")
 
-# 根据 ID 获取帖子
-func get_post_by_id(post_id: int):
-	if not _loaded:
-		load_config()
-	for post in _story_posts:
-		if post.id == post_id:
+## 提供给外部调用的接口：获取所有帖子列表
+func get_all_posts() -> Array:
+	if story_data.has("posts"):
+		return story_data["posts"]
+	return []
+
+## 根据字符串 ID 获取特定帖子
+func get_post_by_id(post_id: String) -> Dictionary:
+	for post in get_all_posts():
+		# 使用 str() 强制转换，防止 JSON 解析出来偶尔变成数字导致匹配失败
+		if str(post.get("id", "")) == post_id:
 			return post
-	return null
+	
+	push_warning("【剧情警告】未找到 ID 为 " + post_id + " 的帖子")
+	return {}

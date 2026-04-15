@@ -16,6 +16,11 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://assets/icons/icon.svg"
 config/main_scene="uid://bdp5elhogd0ak"
 
+[autoload]
+
+StoryConfig="*uid://dilovru12ue2"
+ApiKey="*uid://c5tplu23jwotf"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

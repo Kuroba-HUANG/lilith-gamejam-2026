@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dop2ph21jo4ow"]
 
 [ext_resource type="Script" uid="uid://qiqjdiaxqk26" path="res://scripts/forum/post_scene.gd" id="1_uich3"]
+[ext_resource type="Script" uid="uid://crsb46qyyd2n8" path="res://scripts/api/api.gd" id="2_uich3"]
 
 [node name="PostScene" type="Control" unique_id=1189145245]
 layout_mode = 3
@@ -11,7 +12,12 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_uich3")
 
+[node name="APIManager" type="HTTPRequest" parent="." unique_id=188701846]
+unique_name_in_owner = true
+script = ExtResource("2_uich3")
+
 [node name="MainLayout" type="HBoxContainer" parent="." unique_id=1539904674]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,6 +27,7 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 
 [node name="LeftColumn" type="VBoxContainer" parent="MainLayout" unique_id=1248065432]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 
@@ -33,6 +40,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="PostItemContainer" type="VBoxContainer" parent="MainLayout/LeftColumn/PostListScroll" unique_id=986825550]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="CenterColumn" type="VBoxContainer" parent="MainLayout" unique_id=1627961565]
@@ -47,10 +55,12 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="PostTitle" type="Label" parent="MainLayout/CenterColumn/PostDetailArea" unique_id=1807462280]
+unique_name_in_owner = true
 layout_mode = 2
 text = "巨大的标题"
 
 [node name="PostMainContent" type="RichTextLabel" parent="MainLayout/CenterColumn/PostDetailArea" unique_id=1597885531]
+unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 2
 text = "帖子正文"
@@ -65,18 +75,22 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="InputText" type="TextEdit" parent="MainLayout/CenterColumn/PostDetailArea/ReplyInputBox/VBoxContainer" unique_id=916234324]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-text = "在这里输入"
 
 [node name="SendButton" type="Button" parent="MainLayout/CenterColumn/PostDetailArea/ReplyInputBox/VBoxContainer" unique_id=984333043]
+unique_name_in_owner = true
 layout_mode = 2
 text = "发送"
 
 [node name="CommentScroll" type="ScrollContainer" parent="MainLayout/CenterColumn" unique_id=257754864]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="CommentList" type="VBoxContainer" parent="MainLayout/CenterColumn/CommentScroll" unique_id=2049319557]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="RightColumn" type="VBoxContainer" parent="MainLayout" unique_id=97937363]

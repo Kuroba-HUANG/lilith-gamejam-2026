@@ -1,130 +1,67 @@
-# scripts/forum/main.gd
-extends Control
+# main.gd
+extends Node
 
-const POST_SCENE = preload("res://scenes/forum/post_scene.tscn")
-const STORY_CONFIG_SCRIPT = preload("res://config/story_config.gd")
+@onready var scene_container = $SceneContainer
+@onready var anim_player = $TransitionLayer/AnimationPlayer
 
-@onready var post_list: VBoxContainer = $ScrollContainer/VBoxContainer
-@onready var scroll: ScrollContainer = $ScrollContainer
-@onready var refresh_button: Button = $RefreshButton
-
-var story_queue: Array = []
-var published_ids: Array = []
-var game_start_time: float = 0.0
-var timer: Timer
-var story_config
-
-# 获取 button.gd 的引用（用于 AI 调用）
-var post_button: Button = null
+# 记录当前剧情进度的变量（策划条件预留）
+var interaction_count = 0
 
 func _ready():
-	var bg = StyleBoxFlat.new()
-	bg.bg_color = Color(0.94, 0.95, 0.96)
-	add_theme_stylebox_override("panel", bg)
-	
-	# 隐藏底部发帖区域
-	if $HBoxContainer:
-		$HBoxContainer.visible = false
-	
-	# 创建配置实例
-	story_config = STORY_CONFIG_SCRIPT.new()
-	story_config.load_config()
-	
-	_init_story_queue()
-	
-	timer = Timer.new()
-	timer.wait_time = 1.0
-	timer.timeout.connect(_on_timer_tick)
-	add_child(timer)
-	timer.start()
-	
-	game_start_time = Time.get_ticks_msec() / 1000.0
-	
-	if refresh_button:
-		refresh_button.pressed.connect(_on_refresh_pressed)
-	
-	print("论坛已启动，将自动发布剧情帖子...")
-	_add_system_message("✨ 论坛已开启，剧情帖将自动发布 ✨")
+	# 初始场景：进入桌面
+	change_sub_scene("res://scenes/desktop/desktop.tscn")
 
-# 玩家回复时的回调（由 post.gd 调用）
-func on_player_replied(post_instance, user_reply: String, npc_name: String, post_content: String):
-	print("玩家回复了帖子，NPC: %s, 回复内容: %s" % [npc_name, user_reply])
-	
-	# 调用 AI 生成 NPC 回复
-	if post_button and post_button.has_method("call_ai_for_npc_reply"):
-		post_button.call_ai_for_npc_reply(post_instance, user_reply, npc_name, post_content)
+## 通用的场景切换函数
+func change_sub_scene(scene_path: String):
+	# 1. 播放淡出动画（可选）
+	#if anim_player:
+		#anim_player.play("fade_out")
+		#await anim_player.animation_finished
 
-func _init_story_queue():
-	var all_posts = story_config.get_story_posts()
-	story_queue = all_posts.duplicate()
-	story_queue.sort_custom(func(a, b): return a.delay_seconds < b.delay_seconds)
-
-func _on_timer_tick():
-	var current_time = (Time.get_ticks_msec() / 1000.0) - game_start_time
-	
-	while story_queue.size() > 0:
-		var next_post = story_queue[0]
-		if current_time >= next_post.delay_seconds:
-			story_queue.pop_front()
-			if next_post.id not in published_ids:
-				_publish_story_post(next_post)
-		else:
-			break
-
-func _publish_story_post(post):
-	published_ids.append(post.id)
-	
-	var post_instance = POST_SCENE.instantiate()
-	
-	# === 关键修改：先加到场景树，让 @onready 生效 ===
-	post_list.add_child(post_instance) 
-	
-	# 判断类型
-	if post.post_type == "reply":
-		var target_post = _find_post_by_id(post.reply_to)
-		if target_post:
-			target_post.add_reply(post.character, post.content, true)
-			_add_system_message("%s 回复了帖子" % post.character)
-		else:
-			# 找不到目标，作为主帖显示
-			post_instance.setup_as_main_post(post.title, post.content, post.character)
-			_add_system_message("【%s】发布了内容" % post.character)
-	else:
-		# 主帖
-		post_instance.setup_as_main_post(post.title, post.content, post.character)
-		_add_system_message("【%s】发布了新帖《%s》" % [post.character, post.title])
-	
-	scroll_to_bottom()
-	
-	scroll_to_bottom()
-	print("📢 发布: %s" % post.character)
-	
-func _find_post_by_id(post_id: int):
-	for child in post_list.get_children():
-		if child.has_method("get_post_id") and child.get_post_id() == post_id:
-			return child
-	return null
-
-func _add_system_message(text: String):
-	var msg_label = Label.new()
-	msg_label.text = "🔔 " + text
-	msg_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-	msg_label.add_theme_font_size_override("font_size", 12)
-	post_list.add_child(msg_label)
-	scroll_to_bottom()
-
-func scroll_to_bottom():
-	await get_tree().process_frame
-	if scroll and scroll.get_v_scroll_bar():
-		scroll.scroll_vertical = scroll.get_v_scroll_bar().max_value
-
-func _on_refresh_pressed():
-	for child in post_list.get_children():
+	# 2. 清理容器
+	for child in scene_container.get_children():
 		child.queue_free()
+
+	# 3. 实例新场景
+	var new_scene = load(scene_path).instantiate()
+	scene_container.add_child(new_scene)
+
 	
-	published_ids.clear()
-	_init_story_queue()
-	game_start_time = Time.get_ticks_msec() / 1000.0
+	# 4. 播放淡入动画（暂无）
+	#if anim_player:
+		#anim_player.play("fade_in")
+
+## ================= 剧情控制接口 (交互驱动核心) =================
+
+## 供 post_scene 或 desktop 调用：汇报发生了什么
+func notify_interaction(type: String, extra_data: Dictionary = {}):
+	print("【导演层】接收到交互：", type)
 	
-	_add_system_message("🔄 论坛已刷新，剧情将重新开始")
-	print("论坛已重置")
+	match type:
+		"player_post":
+			interaction_count += 1
+			_check_story_logic()
+		"open_file":
+			print("玩家查看了文件：", extra_data.get("file_name"))
+
+## 检查是否满足策划的“神秘条件”
+func _check_story_logic():
+	# 示例测试逻辑：回帖 2 次后触发佐藤新帖
+	if interaction_count == 2:
+		trigger_sato_event("sato_post_002")
+
+## 强制触发佐藤事件
+func trigger_sato_event(event_id: String):
+	print("【剧情】触发主线：", event_id)
+	var next_data = StoryConfig.get_post_by_id(event_id) # 假设 StoryConfig 有这个方法
+	
+	# 获取当前正在运行的场景
+	var current_scene = scene_container.get_child(0)
+	
+	# 如果当前就在论坛，直接刷新内容
+	if current_scene.has_method("setup_post"):
+		current_scene.setup_post(next_data)
+	else:
+		# 如果玩家在桌面，可以弹出一个“通知”
+		print("玩家不在论坛，应弹出桌面通知")
+		

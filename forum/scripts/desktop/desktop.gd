@@ -23,8 +23,7 @@ extends Control
 # ============================================
 # 常量 - 场景路径
 # ============================================
-const FORUM_SCENE = "res://scenes/forum/main.tscn"        # 论坛主场景
-const POST_SCENE = "res://scenes/forum/post.tscn"         # 帖子场景
+const POST_SCENE = "res://scenes/forum/post_scene.tscn"         # 论坛功能中心
 
 # ============================================
 # 全局变量
@@ -425,7 +424,18 @@ func _show_url_input_popup():
 		if input == CORRECT_URL:
 			popup.queue_free()
 			current_popup = null
-			get_tree().change_scene_to_file(FORUM_SCENE)
+			
+			# --- 核心改动开始 ---
+			# 尝试寻找 Main 节点
+			var main_node = get_tree().root.find_child("Main", true, false)
+			if main_node and main_node.has_method("change_sub_scene"):
+				# 如果在 Main 容器里，请求 Main 来切换
+				main_node.change_sub_scene(POST_SCENE)
+			else:
+				# 保险逻辑：如果单独运行此场景，依然使用原有的切换方式
+				get_tree().change_scene_to_file(POST_SCENE)
+			# --- 核心改动结束 ---
+			
 		else:
 			_show_message_popup("❌ 网址错误", "请输入正确的设定字符：\"%s\"\n\n当前输入：\"%s\"" % [CORRECT_URL, input])
 			line_edit.clear()

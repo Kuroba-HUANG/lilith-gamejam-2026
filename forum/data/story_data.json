@@ -1,0 +1,12 @@
+{
+  "posts": [
+	{
+	  "id": "post_001",
+	  "character": "佐藤",
+	  "title": "有人在吗？",
+	  "content": "我感觉窗外有人在爬...",
+	  "stage": "第一天",
+	  "fixed_stairs": []
+	}
+  ]
+}

@@ -1,7 +1,6 @@
 # scripts/forum/post_scene.gd
 extends Control
 
-# ========== 节点引用 (请确保在场景中勾选了“取个唯一名称”) ==========
 @onready var api_manager = %APIManager
 @onready var post_title: Label = %PostTitle
 @onready var post_content: RichTextLabel = %PostMainContent
@@ -11,119 +10,134 @@ extends Control
 @onready var comment_scroll: ScrollContainer = %CommentScroll
 @onready var post_item_container: VBoxContainer = %PostItemContainer
 
-# 预制体加载
 const COMMENT_ITEM = preload("res://scenes/forum/comment_item.tscn")
 const LIST_ITEM = preload("res://scenes/forum/post_list_item.tscn")
 
-var current_post_data: Dictionary = {}
+# 核心变量：必须确保它是唯一的
+var current_post_id: String = ""
 
 func _ready():
-	# 连接 API 信号
+	# 关键修复 1：连接信号前，确保先断开旧连接（防止重复触发）
 	if api_manager:
+		if api_manager.ai_reply_generated.is_connected(_on_ai_reply_received):
+			api_manager.ai_reply_generated.disconnect(_on_ai_reply_received)
 		api_manager.ai_reply_generated.connect(_on_ai_reply_received)
 	
-	# 连接按钮信号
 	if send_button:
+		# 同样处理按钮连接
+		if send_button.pressed.is_connected(_on_send_pressed):
+			send_button.pressed.disconnect(_on_send_pressed)
 		send_button.pressed.connect(_on_send_pressed)
 	
-	# 初始化加载左侧列表
 	_refresh_left_post_list()
 
-## 核心接口：由 main.gd 或列表点击调用
+## 核心接口：由列表点击调用
 func setup_post(data: Dictionary) -> void:
-	current_post_data = data
-	post_title.text = data.get("title", "无标题")
+	print("【UI】尝试切换到帖子: ", data.get("title"))
+	# 1. 立即锁定 ID（将 ID 转换为字符串，防止对比失败）
+	var new_id = str(data.get("id", "001"))
+	
+	# 如果点击的是当前已经在看的帖子，不做重复加载
+	if new_id == current_post_id and comment_list.get_child_count() > 0:
+		return
+		
+	current_post_id = new_id
+	
+	# 2. UI 文本更新
+	post_title.text = data.get("title", "论坛主页")
 	post_content.text = data.get("content", "")
 	
+	# 3. 彻底清空（使用循环确保干净）
 	_clear_comments()
-	# 渲染 JSON 中的固定楼层
-	if data.has("fixed_stairs"):
-		for c_data in data["fixed_stairs"]:
-			_add_comment_ui(c_data.author, c_data.content, str(c_data.floor) + "F", true)
 	
-	_refresh_left_post_list()
+	# 4. 从历史记录管理器中仅抓取属于 current_post_id 的内容
+	var history = HistoryManager.get_history(current_post_id)
+	for record in history:
+		_add_comment_ui(record.author, record.content, record.time, record.is_npc)
 
-## 渲染评论 UI
-func _add_comment_ui(author: String, content: String, floor_text: String, is_npc: bool):
-	if not comment_list: return
-	
-	var comment = COMMENT_ITEM.instantiate()
-	comment_list.add_child(comment)
-	
-	if comment.has_method("setup"):
-		comment.setup(author, content, floor_text, is_npc)
-	
-	# 确保 UI 更新后滚动到底部
-	await get_tree().process_frame
-	if comment_scroll:
-		comment_scroll.scroll_vertical = comment_scroll.get_v_scroll_bar().max_value
-
-## 玩家点击发送按钮
+## 玩家点击发送
 func _on_send_pressed():
 	var user_input = reply_input.text.strip_edges()
 	if user_input.is_empty(): return
 	
-	# 1. 立即渲染玩家的回帖
+	# 1. 只有当前帖子 ID 存在时才处理
+	if current_post_id == "": return
+	
+	# 2. 本地渲染并存入该 ID 的历史
 	_add_comment_ui("我", user_input, "最新", false)
+	HistoryManager.add_reply(current_post_id, "我", user_input, "最新", false)
 	reply_input.clear()
 	
-	# 2. 视觉反馈：禁用按钮进入“正在回帖”状态
+	# 3. UI 状态调整
 	send_button.disabled = true
 	send_button.text = "正在回帖..."
 	
-	# 3. 发起 API 请求
-	var stage = current_post_data.get("stage", "日常")
-	if api_manager:
-		api_manager.request_ai_reply(user_input, stage)
-	else:
-		_on_ai_reply_received({"npc_name": "系统", "reply_text": "错误：找不到APIManager"})
+	# 4. 传给 Main（带上 ID）
+	var main_node = get_tree().root.find_child("Main", true, false)
+	if main_node and main_node.has_method("notify_interaction"):
+		main_node.notify_interaction("player_post", {"text": user_input, "post_id": current_post_id})
 
-## 信号回调：处理 AI 回复
-func _on_ai_reply_received(response: Dictionary):
-	# --- 1. 原有的 UI 处理逻辑 ---
-	if response.has("npc_name"):
-		_add_comment_ui(response.npc_name, response.reply_text, "邻居", true)
+## 处理 AI 回复
+func _on_ai_reply_received(response: Dictionary, original_post_id: String):
+	# 无论是否是当前帖子，都要存入历史（保证切换回来能看到）
+	HistoryManager.add_reply(original_post_id, response.npc_name, response.reply_text, "邻居", true)
 	
-	# 恢复按钮状态
+	# 解锁 UI
 	send_button.disabled = false
 	send_button.text = "发布"
-	
-	# --- 2. 强力查找 Main 节点 (必须写在函数里面) ---
 	var main_node = get_tree().root.find_child("Main", true, false)
+	if main_node and main_node.has_method("on_ai_finished"):
+		main_node.on_ai_finished()
+	# 关键修复 2：严格校验 original_post_id
+	# 只有当 AI 回复的帖子 ID 确实是玩家眼睛盯着的这个 ID，才渲染
+	if str(original_post_id) == current_post_id:
+		_add_comment_ui(response.npc_name, response.reply_text, "邻居", true)	
+
+
+## 供 Main 调用接口（主线剧情回复）
+func display_new_message(author: String, content: String, post_id: String):
+	# 关键修复 3：这里的逻辑必须也带 ID 校验
+	if str(post_id) == current_post_id:
+		_add_comment_ui(author, content, "邻居", true)
+
+func _add_comment_ui(author: String, content: String, time_text: String, is_npc: bool):
+	if not comment_list: return
+	var comment = COMMENT_ITEM.instantiate()
+	comment_list.add_child(comment)
+	if comment.has_method("setup"):
+		comment.setup(author, content, time_text, is_npc)
 	
-	if main_node:
-		print("【调试】找到 Main 节点了，准备调用方法...")
-		if main_node.has_method("notify_interaction"):
-			main_node.notify_interaction("player_post")
-		else:
-			print("【错误】找到了 Main 节点，但它没有 notify_interaction 函数！")
-	else:
-		# 这里的打印非常关键，能告诉我们现在到底是谁在当家
-		print("【错误】全场景树搜索也找不到名为 Main 的节点。")
-		var current_root = get_tree().current_scene
-		if current_root:
-			print("当前场景根节点是: ", current_root.name)
-
-
-## ================= 左侧列表逻辑 =================
-func _refresh_left_post_list():
-	if not post_item_container: return
-	for child in post_item_container.get_children():
-		child.queue_free()
-	
-	var all_posts = StoryConfig.get_all_posts()
-	for p in all_posts:
-		var item = LIST_ITEM.instantiate()
-		post_item_container.add_child(item)
-		item.setup(p)
-		# 假设 post_list_item 有个信号叫 post_selected
-		if item.has_signal("post_selected"):
-			item.post_selected.connect(_on_post_item_selected)
-
-func _on_post_item_selected(data: Dictionary):
-	setup_post(data)
+	# 自动滚动
+	await get_tree().process_frame
+	if comment_scroll:
+		comment_scroll.scroll_vertical = comment_scroll.get_v_scroll_bar().max_value
 
 func _clear_comments():
 	if not comment_list: return
 	for child in comment_list.get_children():
 		child.queue_free()
+
+func _refresh_left_post_list():
+	if not post_item_container: return
+	
+	# 清理旧列表
+	for child in post_item_container.get_children():
+		child.queue_free()
+	
+	var all_posts = StoryConfig.get_all_posts()
+	
+	for p in all_posts:
+		var item = LIST_ITEM.instantiate()
+		post_item_container.add_child(item)
+		
+		# 初始化数据
+		if item.has_method("setup"):
+			item.setup(p)
+		
+		# 关键修复：直接连接信号。因为旧 item 已经被 queue_free 了，
+		# 新实例化的 item 信号必然是空的，直接连即可。
+		if item.has_signal("post_selected"):
+			item.post_selected.connect(setup_post)
+		else:
+			# 如果没信号，尝试连按钮原生的 pressed 信号（备选方案）
+			item.pressed.connect(func(): setup_post(p))

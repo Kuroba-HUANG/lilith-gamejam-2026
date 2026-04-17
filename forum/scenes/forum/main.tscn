@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://clwtuxf43m2cc"]
 
 [ext_resource type="Script" uid="uid://cur6mo0lgcaft" path="res://scripts/forum/main.gd" id="1_rs8m3"]
+[ext_resource type="Script" uid="uid://deptvwd2l153n" path="res://story/story_manager.gd" id="2_ofglq"]
 
 [node name="Main" type="Node2D" unique_id=1168810400]
 script = ExtResource("1_rs8m3")
@@ -28,6 +29,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 2
+color = Color(0, 0, 0, 1)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="TransitionLayer" unique_id=428935509]
+
+[node name="StoryManager" type="Node" parent="." unique_id=310850446]
+script = ExtResource("2_ofglq")

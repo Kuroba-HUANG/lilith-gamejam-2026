@@ -1,52 +1,99 @@
-# scripts/api/api.gd
+# api.gd
 extends HTTPRequest
 
-# 引用单例中的密钥
 @onready var auth_header = "Authorization: Bearer " + ApiKey.DEEPSEEK_API_KEY
 
-signal ai_reply_generated(data: Dictionary)
+signal ai_reply_generated(data: Dictionary, post_id: String)
 
 func _ready():
-	# 核心修复：必须连接内置信号才能触发 _on_request_completed
-	self.request_completed.connect(_on_request_completed)
+	# ❗ 不再使用自身 HTTPRequest 发请求
+	# 所以这里不需要连接 request_completed
+	pass
 
-func request_ai_reply(player_text: String, game_stage: String):
+
+func request_ai_reply(player_text: String, npc_name: String, custom_system_prompt: String, post_id: String):
+
+	# ✅ 每个NPC独立请求实例
+	var http = HTTPRequest.new()
+	get_tree().current_scene.add_child(http)
+
+	# ✅ 绑定回调（闭包带 post_id）
+	http.request_completed.connect(
+		func(result, response_code, headers, body):
+			_on_request_completed(http, result, response_code, headers, body, post_id)
+	)
+
 	var url = "https://api.deepseek.com/chat/completions"
-	var headers = ["Content-Type: application/json", auth_header]
-	
-	# 根据你的《简易说明》文档构建 Prompt
-	var system_prompt = "你是一个文字冒险游戏中的NPC调度器。游戏背景：██是一个被不可名状怪物控制的社区。这里的居民认知已经完全扭曲，认为怪物吃人是温馨正常的日常。当前阶段：%s。任务：根据玩家输入生成回复。必须以JSON格式返回：{\"npc_name\": \"名字\", \"reply_text\": \"台词\"}" % game_stage
-	
+	var headers = [
+		"Content-Type: application/json",
+		auth_header
+	]
+
+	# ✅ 强制JSON输出
+	var final_system_message = custom_system_prompt \
+		+ "\n必须以JSON格式返回：{\"npc_name\": \"" + npc_name + "\", \"reply_text\": \"内容\"}"
+
 	var body_data = {
 		"model": "deepseek-chat",
 		"messages": [
-			{"role": "system", "content": system_prompt},
+			{"role": "system", "content": final_system_message},
 			{"role": "user", "content": player_text}
 		],
 		"response_format": { "type": "json_object" }
 	}
-	
-	var json_string = JSON.stringify(body_data)
-	var error = request(url, headers, HTTPClient.METHOD_POST, json_string)
-	
-	if error != OK:
-		push_error("API请求发起失败")
-		ai_reply_generated.emit({"npc_name": "系统", "reply_text": "网络请求初始化失败"})
 
-func _on_request_completed(result, response_code, headers, body):
-	print("收到回复，状态码:", response_code)
-	
+	var err = http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body_data))
+
+	if err != OK:
+		ai_reply_generated.emit(
+			{"npc_name": "系统", "reply_text": "网络异常"},
+			post_id
+		)
+		http.queue_free()
+
+
+func _on_request_completed(http, result, response_code, _headers, body, post_id):
+
+	# ❗ 防止请求失败但 response_code 还没进200分支
+	if result != HTTPRequest.RESULT_SUCCESS:
+		ai_reply_generated.emit(
+			{"npc_name": "系统", "reply_text": "请求失败"},
+			post_id
+		)
+		http.queue_free()
+		return
+
 	if response_code == 200:
-		var response_raw = body.get_string_from_utf8()
-		var json_res = JSON.parse_string(response_raw)
+		var raw_text = body.get_string_from_utf8()
 		
-		if json_res and json_res.has("choices"):
-			var content_str = json_res["choices"][0]["message"]["content"]
-			var content_json = JSON.parse_string(content_str)
-			ai_reply_generated.emit(content_json)
-		else:
-			ai_reply_generated.emit({"npc_name": "系统", "reply_text": "解析回复失败"})
+		var raw_json = JSON.parse_string(raw_text)
+		if typeof(raw_json) != TYPE_DICTIONARY:
+			ai_reply_generated.emit(
+				{"npc_name": "系统", "reply_text": "返回格式错误"},
+				post_id
+			)
+			http.queue_free()
+			return
+		
+		var content = raw_json["choices"][0]["message"]["content"]
+		
+		var content_json = JSON.parse_string(content)
+		if typeof(content_json) != TYPE_DICTIONARY:
+			ai_reply_generated.emit(
+				{"npc_name": "系统", "reply_text": "AI输出解析失败"},
+				post_id
+			)
+			http.queue_free()
+			return
+		
+		# ✅ 正常返回
+		ai_reply_generated.emit(content_json, post_id)
+
 	else:
-		var err_body = body.get_string_from_utf8()
-		print("API详细错误:", err_body)
-		ai_reply_generated.emit({"npc_name": "系统", "reply_text": "邻居们暂时不想说话 (Code: %d)" % response_code})
+		ai_reply_generated.emit(
+			{"npc_name": "系统", "reply_text": "错误代码:%d" % response_code},
+			post_id
+		)
+
+	# ✅ 必须释放（否则内存爆）
+	http.queue_free()

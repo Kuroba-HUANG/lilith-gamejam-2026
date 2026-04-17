@@ -20,6 +20,7 @@ config/main_scene="uid://bdp5elhogd0ak"
 
 StoryConfig="*uid://dilovru12ue2"
 ApiKey="*uid://c5tplu23jwotf"
+HistoryManager="*uid://blygitbhif7xu"
 
 [physics]
 

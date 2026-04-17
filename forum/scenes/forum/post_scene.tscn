@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dop2ph21jo4ow"]
 
+[ext_resource type="Theme" uid="uid://jvrdv0jx8n0s" path="res://main_theme.tres" id="1_j44ex"]
 [ext_resource type="Script" uid="uid://qiqjdiaxqk26" path="res://scripts/forum/post_scene.gd" id="1_uich3"]
 [ext_resource type="Script" uid="uid://crsb46qyyd2n8" path="res://scripts/api/api.gd" id="2_uich3"]
 
@@ -10,9 +11,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_j44ex")
 script = ExtResource("1_uich3")
 
-[node name="APIManager" type="HTTPRequest" parent="." unique_id=188701846]
+[node name="APIManager" type="HTTPRequest" parent="." unique_id=273153517]
 unique_name_in_owner = true
 script = ExtResource("2_uich3")
 

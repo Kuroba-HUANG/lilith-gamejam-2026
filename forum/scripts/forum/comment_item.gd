@@ -22,6 +22,14 @@ func setup(author: String, content: String, time_str: String, is_npc: bool = fal
 	# 如果节点已经准备好了（比如手动调用时），直接更新 UI
 	if is_inside_tree():
 		_update_ui()
+	if author == "平安是福" and content.find("小雅") != -1:
+		$CommentContent/CommentText.modulate = Color(1, 0.3, 0.3)
+		_start_glitch_effect()
+
+func _start_glitch_effect():
+	while true:
+		await get_tree().create_timer(0.05).timeout
+		self.position.x += randf_range(-1, 1)
 
 func _ready():
 	# 当节点进入场景树后，自动更新一次 UI

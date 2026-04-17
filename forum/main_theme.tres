@@ -1,0 +1,6 @@
+[gd_resource type="Theme" format=3 uid="uid://jvrdv0jx8n0s"]
+
+[ext_resource type="FontFile" uid="uid://o01w2v6x2uqx" path="res://assets/raw/字体/（TTF）12px-proportional-V2025.08.24/ark-pixel-12px-proportional-zh_cn.ttf" id="1_470mv"]
+
+[resource]
+default_font = ExtResource("1_470mv")

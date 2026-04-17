@@ -9,16 +9,16 @@ extends Control
 @onready var start_button: Button = $Taskbar/StartButton
 
 # 图标按钮
-@onready var browser_icon: Button = $IconsContainer/IconBrowser
-@onready var icon_docs: Button = $IconsContainer/IconDocs
-@onready var icon_media: Button = $IconsContainer/IconMedia
-@onready var icon_files: Button = $IconsContainer/IconFiles
+@onready var browser_icon: = $IconsContainer/IconBrowser
+@onready var icon_docs: = $IconsContainer/IconDocs
+@onready var icon_media: = $IconsContainer/IconMedia
+@onready var icon_files:= $IconsContainer/IconFiles
 
 # 弹窗容器
 @onready var popup_container: Control = $PopupContainer
 
 # 背景
-@onready var background: ColorRect = $Background
+@onready var background: = $Background
 
 # ============================================
 # 常量 - 场景路径
@@ -59,7 +59,7 @@ func _ready():
 	
 	# 连接图标信号
 	browser_icon.pressed.connect(_on_browser_pressed)
-	icon_docs.pressed.connect(_on_icon_pressed.bind("我的文档"))
+	icon_docs.pressed.connect(_on_icon_pressed.bind("我的电脑"))
 	icon_media.pressed.connect(_on_icon_pressed.bind("媒体播放器"))
 	icon_files.pressed.connect(_on_icon_pressed.bind("文件管理器"))
 	
@@ -333,7 +333,7 @@ func _on_shutdown_pressed():
 # ============================================
 # 浏览器按钮 - 弹出网址输入窗口
 # ============================================
-const CORRECT_URL = "论坛网址"
+const CORRECT_URL = "xylt.com"
 
 func _on_browser_pressed():
 	_show_url_input_popup()
@@ -384,7 +384,7 @@ func _show_url_input_popup():
 	
 	# 输入框
 	var line_edit = LineEdit.new()
-	line_edit.placeholder_text = "请输入设定字符..."
+	line_edit.placeholder_text = "请输入论坛网址..."
 	line_edit.size_flags_horizontal = Control.SIZE_EXPAND
 	vbox.add_child(line_edit)
 	
